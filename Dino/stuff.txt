@@ -1,0 +1,37 @@
+---> extracting main details from the reseach paper 
+
+Our study also underlines the importance ofmomentum encoder [31], multi-crop training,
+and the use of small patches with ViTs.
+
+In particular, trainingDINO with ViT takes just two 8-GPU servers over 3 daysto achieve 76.1% 
+on ImageNet linear benchmark
+
+Network architecture. -->
+
+The neural networkgis composedof a backbonef(ViT [18] or ResNet
+[32]), and of a projec-tion headh:g=h◦f.  The features used in downstreamtasks are the
+backbonefoutput. The projection head con-sists of a 3-layer multi-layer perceptron (MLP)
+with hidden dimension 2048 followed by`2normalization and a weightnormalized fully
+connected layer [59] withKdimensions,which is similar to the design from SwAV [10].
+We havetested other projection heads and this particular design ap-pears to work best for
+DINO (Appendix C). We do not use apredictor [28,15], resulting in the exact same architecture
+inboth student and teacher networks. Of particular interest, wenote that unlike standard 
+convnets, ViT architectures do notuse batch normalizations (BN) by default.
+Therefore, whenapplying DINO to ViT we do not use any BN also in theprojection 
+heads, making the systementirely BN-free
+
+
+
+Implementation details. -->
+
+We pretrain the models on theImageNet dataset [58] without labels.
+We train with theadamw optimizer [42] and a batch size of1024, distributedover16GPUs when
+using DeiT-S/16.  The learning rateis linearly ramped up during the first10epochs to 
+its basevalue determined with the following linear scaling rule [27]:lr= 0.0005∗batchsize/256.
+After this warmup, we decaythe learning rate with a cosine schedule [41].  
+The weightdecay also follows a cosine schedule from0.04to0.4. Thetemperatureτsis set 
+to0.1while we use a linear warm-upforτtfrom0.04to0.07during the first30epochs.   
+Wefollow the data augmentations of BYOL [28] (color jittering,Gaussian blur and 
+solarization) and multi-crop [10] with abicubic interpolation to adapt the position 
+embeddings tothe scales [18,66]. The code and models to reproduce ourresults is 
+publicly available
