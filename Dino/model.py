@@ -4,6 +4,41 @@ import math
 import numpy as np
 
 
+## helper classes
+class drop_path(nn.Module):
+    def __init__(self, drop_prob = 0., training = False):
+        super(drop_path, self).__init__()
+        self.drop_prob = drop_prob
+        self.training = training
+
+    def forward(self, x):
+        if self.drop_prob == 0 or not training:
+            return x
+        keep_prob = 1 - drop_prob
+        shape = (x.shape[0],) + (1,) * (x.ndim - 1)
+        random_tensor = keep_prob + torch.rand(shape, dtype = x.dtype, device = x.device)
+        output = x.div(keep_prob) * random_tensor
+        return output
+
+class multi_layer_perseptron(nn.Module):
+    def __init__(self, in_features, hidden_features=None,
+            out_features=None, act_layer=nn.GELU, drop=0):
+        super(multi_layer_perseptron, self).__init__()
+
+        self.layers = []
+        out_features = out_features or in_features
+        hidden_features = hidden_features or in_features
+
+        self.layers += [ nn.Linear(in_features, hidden_features),
+            act_layer(),
+            nn.Linear(hidden_features, out_features),
+            nn.Dropout(drop), ]
+
+    def forward(self, x):   
+        return self.layers(x)       
+
+
+## main network
 class ViT(nn.Module):
     def __init__(self, img_size=[244], patch_size=16, channels=3, num_classes=0, embed_dim=768,
             depth=12, num_heads=12, mlp_ratio=4, qkv_bias=False, qk_scale=None, drop_rate=0,
