@@ -260,3 +260,4 @@ class ViT(nn.Module):
         return torch.cat(output, dim=1)
 
 
+# remaining: DINOHEAD AND SOME MORE FUNCTIONS TO CALL THE MODEL
