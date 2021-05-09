@@ -25,7 +25,85 @@ class ViT(nn.Module):
         
         self.blocks = nn.ModuleList([
             Block(
-                dim = embed_dim, num_heads=num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias)])
+                dim = embed_dim, num_heads=num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias)
+            for i in range(depth)])
+        self.norm = norm_layer(embed_dim)
+
+        self.head = nn.Linear(embed_dim, num_Classes) if num_classes > 0 else nn.Identity()
+
+        trunc_normal_(self.pos_embed, std=.02)
+        trunc_normal_(self.cls_token, std=.02)
+        self.apply(self._init_weights)
+
+    def _init_weights(self, m):
+        if isinstance(m, nn.Linear):
+            trunc_normal_(m.weight, std=.02)
+            if isinstance(m, nn.Linear) and m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+
+        elif isinstance(m, nn.LayerNorm):
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
+
+    def forward(self, x):
+        if not isinstance(x, list):
+            x = [x]
+
+        # Perform forward pass separately on each resolution input.
+        # The inputs corresponding to a single resolution are clubbed and single
+        # forward is run on the same resolution inputs. Hence we do several
+        # forward passes = number of different resolutions used. We then
+        # concatenate all the output features.
+    
+        idx_crops = torch.cumsum(torch.unique_consecutive(
+            torch.tensor([inp.shape[-1] for inp in x]),
+            return_count=True,
+            )[1],0)
+        start_idx = 0
+        for end_idx in idx_crops:
+            _out = self,forward_features(torch.cat(x[start_idx: end_idx]))
+            if start_idx == 0:
+                output = _out
+            else:
+                output = torch.cat((output, _out))
+            start_idx = end_idx
+
+        return self.head(outout) 
+
+    def forward_features(self, x):
+        B = x.shape[0]
+        x = self.patch_embed(x)
+
+        cls_tokens = self.cls_token.expand(B, -1, -1)
+        x = torch.cat((cld_token, x), dim=1)
+        pos_embed = self.interpolate_pos_encoding(x, self.pos_embed)
+        x = s + pos_embed
+        x = self.pos_drop(x)
+
+        for blk in self.blocks:
+            x = blk(x)
+        if self.norm in not None:
+            x = self.norm(x)
+
+        return x[:, 0]
+
+
+    def interpolate_pos_encoding(self, x, pos_embed):
+        npatch = x.shape[1] - 1
+        N = pos_embed.shape[1] - 1
+        if npatch == N:
+            return pos_embed
+        class_emb = pos_embed[:, 0]
+        pos_embed = pos_embed[:, 1:]
+        dim = x.shape[-1]
+        pos_embebd = nn.functional.interpolate(
+                pos_embed.reshape(1, int(math.sqrt(N)), int(math.sqrt(N)), dim).permute(0,3,1,2),
+                scale_factor = math.sqrt(npatch / N),
+                mode='bicubic',
+            )
+
+        pos_embed = pos
+
 
 
 
