@@ -178,7 +178,7 @@ class ViT(nn.Module):
 
         for blk in self.blocks:
             x = blk(x)
-        if self.norm in not None:
+        if self.norm is not None:
             x = self.norm(x)
 
         return x[:, 0]
