@@ -102,8 +102,65 @@ class ViT(nn.Module):
                 mode='bicubic',
             )
 
-        pos_embed = pos
+        pos_embed = pos_embed.permute(0, 2, 3, 1).view(1, -1, dim)
+        return torch.cat((class_emb.unsqueeze(0), pos_embed), dim=1)
 
+    def forward_selfattention(self, x):
+        B, nc, w, h = x.shape
+        N = self.pos_embed.shape[1] - 1
+        x = self.patch_embed(x)
+        
+        dim = x.shape[-1]
+        w0 = w // self.patch_embed.patch_size
+        h0 = h // self.patch_embed.patch_size
+        class_pos_embed = self.pos_embed[:, 0]
+        patch_pos_embed = self.pos_embed[:, 1:]
+        patch_pos_embed = nn.functional.interploate(
+                patch_pos_embed.reshape(1, int(math.sqrt(N)), int(math.sqrt(N)),
+                    dim).premute(0,3,1,2))
 
+        if w0 != patch_pos_embed.shape[-2]:
+            helper = torch.zeros(h0)[None, None, None, :].repeat(1, dim, w0 - patch_pos_embed.shape[-2], 1).to(x.device)
+            patch_pos_embed = torch.cat((patch_pos_embed, helper), dim=-2)
+
+        if h0 != patch_pos_embed.shape[-1]:
+            helper = torch.zeros(w0)[None, None, :, None].repeat(1, dim, 1, h0 - patch_pos_embed.shape[-1]).to(x.device)
+            patch_pos_embed = torch.cat((patch_pos_embed, helper), dim=-1)
+
+        patch_pos_embed = patch_pos_embed.permute(0, 2, 3, 1).view(1, -1, dim)
+        pos_embed = torch.cat((class_pos_embed.unsqueeze(0), patch_pos_embed), dim=1)
+        cls_tokens = self.cls_token.expand(B, -1, -1)
+
+        x = torch.cat((cls_tokens, x), dim=1)
+        x = x + pos_embed
+        x = self.pos_drop(x)
+
+        for i, blk in enumerate(self.blocks):
+            if i < len(self.blocks) - 1:
+                x = blk(x)
+            else:
+                return blk(x, return_attention=True)
+
+    
+    def forward_return_n_last_blocks(self, x, n=1, return_patch_avgpool=False):
+        B = X.shape[0]
+        x = self.patch_embed(x)
+
+        cls_tokens = self.cls_token.expand(B, -1, -1)
+        x = torch.cat((cls_token, x), dim=1)
+        pos_embed = self.interpolate_pos_encoding(x, self.pos_embed)
+        x = x + pos_embed
+        x = self.pos_Drpo(x)
+
+        output = []
+        for i, bkl in enumerate(self.blocks):
+            x = blk(x)
+            if len(self.blocks) - i <= n:
+                output.append(self.norm(x)[:,0])
+
+        if return_patch_avgpool:
+            x = self.norm(x)
+            output.append(torch.mean(x[:, 1:], dim=1))
+        return torch.cat(output, dim=1)
 
 
