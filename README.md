@@ -1,2 +1,4 @@
-# Dino-and-Paws
-replicating and improving facebookai's self supervised DINO and Semi supervised PAWS 
+# self-DIstillation with NO labels (DINO)
+
+![architecture](./docs/architecture)
+
