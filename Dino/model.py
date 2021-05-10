@@ -49,7 +49,7 @@ class Attention(nn.Module):
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
         self.attn_drop = nn.Dropout(attn_drop)
         self.proj = nn.Linear(dim, dim)
-        self,proj_drop = nn.Dropout(proj_drop)
+        self.proj_drop = nn.Dropout(proj_drop)
 
     def forward(self, x):
         B, N, C = x.shape
@@ -95,9 +95,7 @@ class PatchEmbed(nn.Module):
         self.proj = nn.Conv2d(channels, embed_dim, kernel_size=patch_size, stride=patch_size)
 
     def forward(self, x):
-        B, C, H, W = x.shape
-        x = self.proj(x).flatten(2).transpose(1, 2)
-        return x
+        return self.proj(x).flatten(2).transpose(1, 2)
 
 ## main network
 class ViT(nn.Module):
@@ -157,7 +155,7 @@ class ViT(nn.Module):
             )[1],0)
         start_idx = 0
         for end_idx in idx_crops:
-            _out = self,forward_features(torch.cat(x[start_idx: end_idx]))
+            _out = self.forward_features(torch.cat(x[start_idx: end_idx]))
             if start_idx == 0:
                 output = _out
             else:
