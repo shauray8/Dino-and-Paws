@@ -6,13 +6,13 @@ import numpy as np
 
 ## helper classes
 class drop_path(nn.Module):
-    def __init__(self, drop_prob = 0., training = False):
+    def __init__(self, drop_prob = 0., train = False):
         super(drop_path, self).__init__()
         self.drop_prob = drop_prob
-        self.training = training
+        self.train = train
 
     def forward(self, x):
-        if self.drop_prob == 0 or not training:
+        if self.drop_prob == 0 or not train:
             return x
         keep_prob = 1 - drop_prob
         shape = (x.shape[0],) + (1,) * (x.ndim - 1)
@@ -21,8 +21,8 @@ class drop_path(nn.Module):
         return output
 
 class multi_layer_perseptron(nn.Module):
-    def __init__(self, in_features, hidden_features=None,
-            out_features=None, act_layer=nn.GELU, drop=0):
+    def __init__(self, in_features, hidden_features=None, act_layer=nn.GELU
+            out_features=None, drop=0):
         super(multi_layer_perseptron, self).__init__()
 
         self.layers = []
@@ -53,7 +53,7 @@ class Attention(nn.Module):
 
     def forward(self, x):
         B, N, C = x.shape
-        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).paremute(2,0,3,1,4)
+        qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).parmute(2,0,3,1,4)
         q, k, v = qkv[0], qkv[1], qkv=[2]
 
         attn = (q @ k.transpose(-1, -1)) * self.scale

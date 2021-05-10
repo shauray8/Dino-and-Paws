@@ -12,12 +12,18 @@ from torchvision import models as torchvision_models
 from model import *
 import model
 
-args = sorted(name for name in torchvision_models.__dict__
-        if name.islower() and not name.startswith("__")
-            and callable(torchvision_models.__dict__[name]))
 
-kwargs = sorted(name for name in model.__dict__ 
-          if name.islower and not name.startswith("  ")
-            and callable(model.__dict__[name]))
+def callable_stuff():
+    args = sorted(name for name in torchvision_models.__dict__
+            if name.islower() and not name.startswith("__")
+                and callable(torchvision_models.__dict__[name]))
 
-print(kwargs)
+    kwargs = sorted(name for name in model.__dict__ 
+              if name.islower and not name.startswith("  ")
+                and callable(model.__dict__[name]))
+
+    return args, kwargs
+
+
+args, kwargs = callable_stuff()
+print(args, "\n" , kwargs)
