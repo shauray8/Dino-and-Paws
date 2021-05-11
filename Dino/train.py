@@ -8,9 +8,11 @@ from PIL import Image
 import torch.nn.functional as F
 from torchvision import datasets, transforms
 from torchvision import models as torchvision_models
+import torch.backends.cudnn as cudnn
 
-from model import *
 import model
+from model import *
+from utils import *
 
 
 def callable_stuff():
