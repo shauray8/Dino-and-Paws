@@ -35,7 +35,6 @@ args, kwargs = callable_stuff()
 def train_dino(args):
     utils.init_distributed_mode(args)
     utils.fix_random_seeds(args.seed)
-    print(f"git:\n {utils.get_sha()}\n")
     print("\n".join("%s: %s" % (k, str(v)) for k, v in sorted(dict(vaars(Args)).items())))
     cudnn.benchmark = True
 
