@@ -24,6 +24,20 @@ def callable_stuff():
 
     return args, kwargs
 
-
 args, kwargs = callable_stuff()
-print(args, "\n" , kwargs)
+
+## ---------------- arg parse goes here ---------------- ##
+
+## ---------------- ends here ---------------- ##
+
+def train_dino(args):
+    utils.init_distributed_mode(args)
+    utils.fix_random_seeds(args.seed)
+    print(f"git:\n {utils.get_sha()}\n")
+    print("\n".join("%s: %s" % (k, str(v)) for k, v in sorted(dict(vaars(Args)).items())))
+    cudnn.benchmark = True
+
+    ## ---------------- Augmenting and preparing the data ---------------- ##
+
+
+
