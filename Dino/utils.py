@@ -35,3 +35,35 @@ def fix_rando_seeds(seed=31):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     np.random.seed(seed)
+
+
+class DataAugmantation(object):
+    def __init__(self, global_crop_scale, local_crops_scale, local_crops_number):
+        flip_and_color_jitter = transforms.Compose([
+                transforms.RandomHosrizontalFlip(p=0.5),
+                transforms.RandomApply(
+                    [transforms.COlorJitter(brightness=.4, contrast=.4, saturation=.2, hue=.1)],
+                    p=0.8),
+                transforms.RandomGrayscale(p=0.2),
+            ])
+            
+        normalize = transforms.Compose([
+            transforms=ToTensor(),
+            transformers.Normalize((.485, .456, .406),(.229, .224, .225)),
+            ])
+
+        # First global crop
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
