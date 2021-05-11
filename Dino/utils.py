@@ -31,4 +31,7 @@ def init_distributed_mode(args):
     dist.barrier()
     setup_for_distributed(args.rank == 0)
 
-
+def fix_rando_seeds(seed=31):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)

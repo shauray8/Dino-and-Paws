@@ -16,7 +16,7 @@ from utils import *
 
 
 def callable_stuff():
-    args = sorted(name for name in torchvision_models.__dict__
+    wargs = sorted(name for name in torchvision_models.__dict__
             if name.islower() and not name.startswith("__")
                 and callable(torchvision_models.__dict__[name]))
 
@@ -24,9 +24,9 @@ def callable_stuff():
               if name.islower and not name.startswith("  ")
                 and callable(model.__dict__[name]))
 
-    return args, kwargs
+    return wargs, kwargs
 
-args, kwargs = callable_stuff()
+wargs, kwargs = callable_stuff()
 
 ## ---------------- arg parse goes here ---------------- ##
 
@@ -40,5 +40,40 @@ def train_dino(args):
 
     ## ---------------- Augmenting and preparing the data ---------------- ##
 
+    transform = DataAugmentation(
+                args.global_crops_scale,
+                args.local_crops_scale,
+                args.local_crops_number,
+            )
+    dataset = datasets.ImageFolder(args.data_path, transform=transform)
+    sampler = torch.utils.data.DistributedSampler(dataset, shuffle=True)
+
+    data_loader = torch.utils.data.DataLoader(
+                dataset,
+                sampler=sampler,
+                batch_size=args.batch_per_gpu,
+                num_workers=args.num_workers,
+                pin_memory=True,
+                drop_last=True,
+            )
+    
+    print(f"Data loaded: there are {len(dataset)} images")
 
 
+    ## ---------------- building student and teacher network ---------------- ##
+    ## ---------------- for vision transformers ---------------- ##
+
+    if args.arch in model.__dict__.keys():
+        student = model.__dict__[args.arch](
+                    patch_size = args.patch_size,
+                    drop_path_rate=0.1,
+                )
+        teacher = model.__dict__[arg.arch](patch_size=args.patch_size)
+                    
+        student.head = DINOHead(
+                    student.embed_dim,
+                    args.out_dim,
+                    use_bn=args.use_bn_in_head,
+                    norm_last_layer=args.norm_last_layer,
+                )
+        teacher.head = DINOHead(teacher.embed_dim, args.out_dim, args.use_bn_in_head)

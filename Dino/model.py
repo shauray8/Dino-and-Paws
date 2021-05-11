@@ -21,7 +21,7 @@ class drop_path(nn.Module):
         return output
 
 class multi_layer_perseptron(nn.Module):
-    def __init__(self, in_features, hidden_features=None, act_layer=nn.GELU
+    def __init__(self, in_features, hidden_features=None, act_layer=nn.GELU,
             out_features=None, drop=0):
         super(multi_layer_perseptron, self).__init__()
 
