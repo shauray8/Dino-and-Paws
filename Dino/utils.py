@@ -9,6 +9,7 @@ import torch.nn as nn
 from PIL import ImageFilter, ImageOps
 
 
+## ------------ Useless (atleast for me) multi GPU setup ------------ ##
 def init_distributed_mode(args):
     if torch.cuda.is_available():
         print("will run the code on one GPU")
@@ -31,12 +32,15 @@ def init_distributed_mode(args):
     dist.barrier()
     setup_for_distributed(args.rank == 0)
 
+
+## ------------ Fixing a random seed (I dont know why will this help) ------------ ##
 def fix_rando_seeds(seed=31):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     np.random.seed(seed)
 
 
+## ------------ Data Augmentation ------------ ##
 class DataAugmantation(object):
     def __init__(self, global_crop_scale, local_crops_scale, local_crops_number):
         flip_and_color_jitter = transforms.Compose([
@@ -116,15 +120,6 @@ class Solarization(object):
             return ImageOps.solarize(img)
         else:
             return img
-
-
-
-
-
-
-
-
-
 
 
 
