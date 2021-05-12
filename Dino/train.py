@@ -77,3 +77,42 @@ def train_dino(args):
                     norm_last_layer=args.norm_last_layer,
                 )
         teacher.head = DINOHead(teacher.embed_dim, args.out_dim, args.use_bn_in_head)
+        
+    elif args.arch in torchvision_models.__dict__.keys():
+        student = torchvision_models.__dict__[arg_arch]()
+        teacher = torchvision_models.__dict__[arg_arch]()
+
+        embed_dim = student.fc.weight.shape[1]
+        student = utils.MultiCropWrapper(student, DINOHead(
+            embed_dim,
+            args.out_dim,
+            use_bn=args.use_bn_in_head,
+            norm_last_layer = args_norm_last_layer,
+            ))
+        teacher = utils.MultiCropWrapper(
+                teacher,
+                DINOHead(embed_dim, args_out_dim, args.use_bn_in_head),
+                )
+    else:
+        print(f"Unknown Architecture: {args.arch}")
+
+    device = ["cuda" if torch.cuda.is_available() else "cpu"]
+    student, teacher = student.to(device), teacher.to(device)
+
+    if utils.has_batchnorms(student):
+        student = nn.SyncBatchNorm.convert_sync_batchnorm(student)
+        teacher = nn.SyncBatchNorm.convert_sync_batchnorm(teacher)
+
+        teacher = nn.parallel.DistributedDataParallel(teacher, device_ids=[args.gpu])
+        teacher_without_ddp = teacher.module
+    else:
+        teacher_without_ddp = teacher
+
+    student = nn.parallel.DistributedDataParallel(student, device_ids=[args.gpu])
+    teacher_without_ddp.load_state_dict(student.module.state_dict())
+
+    for p in teacher.parameters():
+        p.requires_grad = False
+    print(f"Student and Teacher are built: they are both {args.arch} network.")
+
+
