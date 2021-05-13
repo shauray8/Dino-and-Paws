@@ -96,7 +96,7 @@ def train_dino(args):
     else:
         print(f"Unknown Architecture: {args.arch}")
 
-    device = ["cuda" if torch.cuda.is_available() else "cpu"]
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     student, teacher = student.to(device), teacher.to(device)
 
     if utils.has_batchnorms(student):
