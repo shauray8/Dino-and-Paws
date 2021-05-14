@@ -115,4 +115,15 @@ def train_dino(args):
         p.requires_grad = False
     print(f"Student and Teacher are built: they are both {args.arch} network.")
 
+## ---------------- LOSS function ---------------- ##
+    dino_loss = DINOLoss(
+            args.out_dim,
+            args.local_crops_number=2,
+            args.warmup_teacher_temp,
+            args.teacher_temp,
+            args.warmup_techer_temp_epochs,
+            args.epoch,
+            ).to(device)
 
+
+## ---------------- preparing the optimizert ---------------- ##
