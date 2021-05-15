@@ -126,4 +126,24 @@ def train_dino(args):
             ).to(device)
 
 
-## ---------------- preparing the optimizert ---------------- ##
+## ---------------- preparing the optimizer ---------------- ##
+
+    params_group = utils.get_params_groups(student)
+
+    if args.optimizer == "adamw":
+        optimizer = torch.optim.AdamW(params_groups)  # to use with ViTs
+    elif args.optimizer == "sgd":
+        optimizer = torch.optim.SGD(params_groups, lr=0, momentum=0.9)  # lr is set by scheduler
+    elif args.optimizer == "lars":
+        optimizer = utils.LARS(params_groups)  # to use with convnet and large batches
+
+    # for mixed precision training
+
+    fp16_scaler = None
+    if args.use_fp16:
+        fp16_scaler = torch.cuda.amp.GradScaler()
+
+
+## ---------------- learning rate schedulers ---------------- ##
+
+

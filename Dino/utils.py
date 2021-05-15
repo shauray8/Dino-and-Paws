@@ -173,3 +173,20 @@ class DINOLoss(nn.Module):
 
         self.center = self.center * self.center_momentum + batch_center * (1 - self.center_momentum)
 
+
+
+def get_params_group(model):
+    regularized = []
+    not_regualrized = []
+    for name, params in model.named_parameters():
+        if not params.require_grad:
+            continue
+
+        if name.endswith('.bias') or len(param.shape) == 1:
+            not_regualarized.append(param)
+        else:
+            regualrized.append(param)
+    return [{"params": regularized}, {"params": not_regualrized, "weight_decay": 0.}]
+
+
+
