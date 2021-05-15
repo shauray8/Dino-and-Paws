@@ -145,5 +145,22 @@ def train_dino(args):
 
 
 ## ---------------- learning rate schedulers ---------------- ##
+    lr_schedule = utils.cosine_scheduler(
+            args.lr * (args.batch_size_per_gpu * utils.get_world_size()) / 256.,
+            args.min_lr,
+            args.epochs, len(data_loader),
+            warmup_epochs = args.warmup_epochs,
+            )
+    wd_scheduler = utils.consine_scheduler(
+            args.weight_decay,
+            args.weight_Decay_end,
+            args.epochs, len(Data_loader),
+            )
 
+    momentum_schedule = utils.cosine_scheduler(args.momentum_teacher, 1,
+            args.epochs, len(data_loader))
+    print(f"=> LOSS, Optimizer and Scheduler ready")
+
+
+    
 
