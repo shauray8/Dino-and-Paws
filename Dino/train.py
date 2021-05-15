@@ -161,6 +161,75 @@ def train_dino(args):
             args.epochs, len(data_loader))
     print(f"=> LOSS, Optimizer and Scheduler ready")
 
+## ---------------- restore prev training ---------------- ##
 
+    to_restore = {"epoch": 0}
+    utils.restart_from_checkpoint(
+        os.path.join(args.output_dir, "checkpoint.pth"),
+        run_variables=to_restore,
+        student=student,
+        teacher=teacher,
+        optimizer=optimizer,
+        fp16_scaler=fp16_scaler,
+        dino_loss=dino_loss,
+    )
+    start_epoch = to_restore["epoch"]
+
+
+## ---------------- TRAINING DINO ---------------- ##
+    start_time = time.time()
+    print("Starting DINO training !")
+    for epoch in range(start_epoch, args.epochs):
+        data_loader.sampler.set_epoch(epoch)
+
+## ---------------- training one epoch of DINO ---------------- ##
+
+        train_stats = train_one_epoch(student, teacher, teacher_without_ddp, dino_loss,
+            data_loader, optimizer, lr_schedule, wd_schedule, momentum_schedule,
+            epoch, fp16_scaler, args)
+
+## ---------------- writing logs ---------------- ##
+
+        save_dict = {
+            'student': student.state_dict(),
+            'teacher': teacher.state_dict(),
+            'optimizer': optimizer.state_dict(),
+            'epoch': epoch + 1,
+            'args': args,
+            'dino_loss': dino_loss.state_dict(),
+        }
+        if fp16_scaler is not None:
+            save_dict['fp16_scaler'] = fp16_scaler.state_dict()
+        utils.save_on_master(save_dict, os.path.join(args.output_dir, 'checkpoint.pth'))
+        if args.saveckp_freq and epoch % args.saveckp_freq == 0:
+            utils.save_on_master(save_dict, os.path.join(args.output_dir, f'checkpoint{epoch:04}.pth'))
+        log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
+                     'epoch': epoch}
+        if utils.is_main_process():
+            with (Path(args.output_dir) / "log.txt").open("a") as f:
+                f.write(json.dumps(log_stats) + "\n")
+    total_time = time.time() - start_time
+    total_time_str = str(datetime.timedelta(seconds=int(total_time)))
+    print('Training time {}'.format(total_time_str))
     
+
+## ---------------- Training 1 epoch ---------------- ##
+
+def train_one_epoch(student, teacher, teacher_without_ddp, dino_loss, data_loader,
+        optimizer, lr_scheduler, wd_schedule, momentum_schedule, epoch,
+        f16_scaler, args):
+    metric_logger = utils.MatricLogger(delimeter=" ")
+    header = f"Epoch: [{epoch}/{arg.epoch}]"
+
+    for it, (image, _) in enumerate(metric_logger.log_every(data_loader, 10, header)):
+
+        it = len(data_loader) * epoch * it
+        for i, param_group in enumerate(optimizer.param_groups):
+            param_group['lr'] = lr_Schedule[it]
+            if i == 0:
+                param_group['weight_decay'] = wd_schedule[it]
+
+        
+        # move images to gpu
+
 
